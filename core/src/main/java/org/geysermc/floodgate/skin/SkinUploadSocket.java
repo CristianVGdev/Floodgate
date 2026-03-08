@@ -139,7 +139,6 @@ final class SkinUploadSocket extends WebSocketClient {
                         subscribersCount, id);
                 break;
             case SKIN_UPLOADED:
-                receivedSkinUploadedEvent = true;
                 String xuid = message.get("xuid").getAsString();
                 if (!message.get("success").getAsBoolean()) {
                     FloodgatePlayer player = api.getPlayer(Utils.getJavaUuid(xuid));
@@ -151,8 +150,13 @@ final class SkinUploadSocket extends WebSocketClient {
                     }
                     logSkinDebug("Skin upload failure payload for xuid {}: {}", xuid, data);
                     triggerMinecraftFallback("uploader-reported-failed-upload");
+                    // Mark the upload response as received after triggering fallback,
+                    // so timeout-based fallback doesn't log a misleading warning.
+                    receivedSkinUploadedEvent = true;
                     return;
                 }
+
+                receivedSkinUploadedEvent = true;
 
                 SkinData skinData = SkinDataImpl.from(message.getAsJsonObject("data"));
                 logSkinDebug("SKIN_UPLOADED success for xuid {} valueLength={} signatureLength={}",
